@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,41 +7,74 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <a href="/logout" class="logout-btn">🚪 Déconnexion</a>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="header-title">Mikrotik Dashboard</h1>
+                {% if not connection_error and last_update %}
+                <div class="connection-status success">
+                    <span class="status-indicator"></span>
+                    {{ mikrotik_host }} - {{ last_update }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="header-right">
+                <a href="/logout" class="logout-btn">Déconnexion</a>
+            </div>
+        </div>
+    </header>
     
     <div class="dashboard-container">
-        
+        {% if connection_error %}
+        <div class="error-container">
+            <div class="error-card">
+                <div class="error-icon">⚠️</div>
+                <h3>Erreur de connexion</h3>
+                <p class="error-message">{{ error_message }}</p>
+                <div class="error-details">
+                    <strong>Hôte:</strong> {{ mikrotik_host }}<br>
+                    <strong>Type d'erreur:</strong> {{ error_type }}
+                </div>
+                <div class="error-actions">
+                    <a href="/refresh" class="btn-retry">Réessayer</a>
+                    <button onclick="location.reload()" class="btn-refresh">Actualiser</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon users">👥</div>
+                <div class="stat-icon users">USR</div>
                 <div class="stat-value">{{ total_users }}</div>
                 <div class="stat-label">Utilisateurs Actifs</div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon consumption">📊</div>
+                <div class="stat-icon consumption">CON</div>
                 <div class="stat-value">{{ total_consumption_formatted }}</div>
                 <div class="stat-label">Consommation Totale</div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon limit">🎯</div>
+                <div class="stat-icon limit">LIM</div>
                 <div class="stat-value">{{ total_limit_formatted }}</div>
                 <div class="stat-label">Limite Totale</div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon percentage">📈</div>
+                <div class="stat-icon percentage">%</div>
                 <div class="stat-value">{{ "%.1f" % total_percentage }}%</div>
                 <div class="stat-label">Pourcentage d'Usage</div>
             </div>
         </div>
 
         <div class="users-section">
-            <h2 class="section-title">
-                👤 Détails des Utilisateurs
-            </h2>
+            <div class="section-header">
+                <h2 class="section-title">Détails des Utilisateurs</h2>
+                <a href="/refresh" class="btn-refresh-small">Actualiser</a>
+            </div>
             
+            {% if users %}
             <div class="users-grid">
                 {% for user in users %}
                 <div class="user-card">
@@ -66,7 +99,7 @@
                         </div>
                         <div class="user-stat">
                             <span class="user-stat-value">{{ user.get('uptime', '0s') }}</span>
-                            <div class="user-stat-label">Temps de connexion</div>
+                            <div class="user-stat-label">Temps connexion</div>
                         </div>
                         <div class="user-stat">
                             <span class="user-stat-value">{{ "%.1f" % user.percentage }}%</span>
@@ -90,15 +123,21 @@
                         {% else %}
                             <form method="post" class="details-form">
                                 <input type="hidden" name="username" value="{{ user.get('name') }}">
-                                <input type="password" name="password" placeholder="Mot de passe utilisateur" required>
-                                <button type="submit" name="view_details" class="btn-details">Voir détails</button>
+                                <input type="password" name="password" placeholder="Mot de passe" required>
+                                <button type="submit" name="view_details" class="btn-details">Détails</button>
                             </form>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
+            {% else %}
+            <div class="no-users">
+                <p>Aucun utilisateur hotspot trouvé.</p>
+            </div>
+            {% endif %}
         </div>
+        {% endif %}
     </div>
 </body>
 </html>

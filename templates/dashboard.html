@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Mikrotik Hotspot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <a href="/logout" class="logout-btn">🚪 Déconnexion</a>
+    
+    <div class="dashboard-container">
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon users">👥</div>
+                <div class="stat-value">{{ total_users }}</div>
+                <div class="stat-label">Utilisateurs Actifs</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon consumption">📊</div>
+                <div class="stat-value">{{ total_consumption_formatted }}</div>
+                <div class="stat-label">Consommation Totale</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon limit">🎯</div>
+                <div class="stat-value">{{ total_limit_formatted }}</div>
+                <div class="stat-label">Limite Totale</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon percentage">📈</div>
+                <div class="stat-value">{{ "%.1f" % total_percentage }}%</div>
+                <div class="stat-label">Pourcentage d'Usage</div>
+            </div>
+        </div>
+
+        <div class="users-section">
+            <h2 class="section-title">
+                👤 Détails des Utilisateurs
+            </h2>
+            
+            <div class="users-grid">
+                {% for user in users %}
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-avatar avatar-{{ loop.index % 10 + 1 }}">
+                            {{ user.get('name', 'N')[0] }}
+                        </div>
+                        <div class="user-info">
+                            <h3>{{ user.get('name', 'N/A') }}</h3>
+                            <span class="user-profile">{{ user.get('profile', 'N/A') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="user-stats">
+                        <div class="user-stat">
+                            <span class="user-stat-value">{{ user.consumption_formatted }}</span>
+                            <div class="user-stat-label">Consommé</div>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-value">{{ user.limit_formatted }}</span>
+                            <div class="user-stat-label">Limite</div>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-value">{{ user.get('uptime', '0s') }}</span>
+                            <div class="user-stat-label">Temps de connexion</div>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-value">{{ "%.1f" % user.percentage }}%</span>
+                            <div class="user-stat-label">Utilisation</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if user.percentage > 80 %}high{% elif user.percentage > 50 %}medium{% endif %}" 
+                             style="--progress-width: {{ user.percentage }}%">
+                        </div>
+                    </div>
+                    
+                    <div class="details-section">
+                        {% if user.get('name') in viewed_details %}
+                            <div class="user-details">
+                                {% for key, value in viewed_details[user.get('name')].items() %}
+                                    <div><strong>{{ key }}:</strong> {{ value }}</div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <form method="post" class="details-form">
+                                <input type="hidden" name="username" value="{{ user.get('name') }}">
+                                <input type="password" name="password" placeholder="Mot de passe utilisateur" required>
+                                <button type="submit" name="view_details" class="btn-details">Voir détails</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

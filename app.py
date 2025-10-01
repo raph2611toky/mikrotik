@@ -4,14 +4,13 @@ import socket
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key'  # Change this to a secure random key in production
+app.secret_key = 'super_secret_key' 
 
-# Mikrotik connection details (static)
 MIKROTIK_HOST = '192.168.15.254'
 MIKROTIK_USER = 'admin'
 MIKROTIK_PASS = 'i-konnect'
 
-# Application login credentials (static, change these in production)
+
 APP_USER = 'admin'
 APP_PASS = 'password'
 
@@ -78,7 +77,7 @@ def get_hotspot_users():
             for part in line.split():
                 if '=' in part:
                     key, value = part.split('=', 1)
-                    current_user[key] = value
+                    current_user[key] = value.strip('"')
 
         if current_user:
             users.append(current_user)

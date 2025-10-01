@@ -104,6 +104,7 @@ body {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 /* Statut de connexion dans le header */
@@ -131,13 +132,8 @@ body {
 }
 
 @keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 /* Bouton de déconnexion dans le header */
@@ -154,6 +150,26 @@ body {
 }
 
 .logout-btn:hover {
+  background: var(--accent-bg);
+  border-color: var(--border-accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Bouton de réinitialisation dans le header */
+.reset-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
   background: var(--accent-bg);
   border-color: var(--border-accent);
   transform: translateY(-1px);
@@ -680,35 +696,164 @@ body {
 }
 
 /* Couleurs d'avatar professionnelles */
-.avatar-1 {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+.avatar-1 { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+.avatar-2 { background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%); }
+.avatar-3 { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+.avatar-4 { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.avatar-5 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.avatar-6 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.avatar-7 { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.avatar-8 { background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); }
+.avatar-9 { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+.avatar-10 { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(5, 150, 105, 0.9);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2000;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.avatar-2 {
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+
+.toast.show {
+  opacity: 1;
 }
-.avatar-3 {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+
+.toast::before {
+  content: "✓";
+  font-size: 16px;
 }
-.avatar-4 {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+/* Popup de confirmation */
+.confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.avatar-5 {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+.confirmation-popup.show {
+  opacity: 1;
+  visibility: visible;
 }
-.avatar-6 {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+.popup-content {
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
 }
-.avatar-7 {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+.popup-content h3 {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
 }
-.avatar-8 {
-  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+
+.popup-content p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 24px;
 }
-.avatar-9 {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+
+.popup-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
-.avatar-10 {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+
+.btn-confirm,
+.btn-cancel {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-confirm {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: var(--secondary-blue);
+  transform: translateY(-1px);
+}
+
+.btn-cancel {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.btn-cancel:hover {
+  background: var(--accent-bg);
+  border-color: var(--border-accent);
+  transform: translateY(-1px);
+}
+
+/* Loader */
+.loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 4000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loader-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loader {
+  border: 4px solid var(--text-muted);
+  border-top: 4px solid var(--primary-blue);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Responsive */
@@ -767,37 +912,25 @@ body {
   .error-actions {
     flex-direction: column;
   }
+
+  .popup-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 /* Animations subtiles */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.stat-card {
-  animation: fadeIn 0.3s ease forwards;
-}
-
+.stat-card,
 .user-card {
   animation: fadeIn 0.3s ease forwards;
 }
 
-.stat-card:nth-child(1) {
-  animation-delay: 0.05s;
-}
-.stat-card:nth-child(2) {
-  animation-delay: 0.1s;
-}
-.stat-card:nth-child(3) {
-  animation-delay: 0.15s;
-}
-.stat-card:nth-child(4) {
-  animation-delay: 0.2s;
-}
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }

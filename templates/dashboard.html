@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Mikrotik Hotspot</title>
+    <title>Mikrotik Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </head>
 <body>
     <header class="main-header">
@@ -19,25 +20,26 @@
                 {% endif %}
             </div>
             <div class="header-right">
-                <a href="/logout" class="logout-btn">Déconnexion</a>
+                <button class="reset-btn" onclick="showConfirmationPopup()">Réinitialiser</button>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Déconnexion</a>
             </div>
         </div>
     </header>
-    
+
     <div class="dashboard-container">
         {% if connection_error %}
         <div class="error-container">
             <div class="error-card">
                 <div class="error-icon">⚠️</div>
                 <h3>Erreur de connexion</h3>
-                <p class="error-message">{{ error_message }}</p>
+                <div class="error-message">{{ error_message }}</div>
                 <div class="error-details">
-                    <strong>Hôte:</strong> {{ mikrotik_host }}<br>
-                    <strong>Type d'erreur:</strong> {{ error_type }}
+                    <div>Hôte: {{ mikrotik_host }}</div>
+                    <div>Type d'erreur: {{ error_type }}</div>
                 </div>
                 <div class="error-actions">
-                    <a href="/refresh" class="btn-retry">Réessayer</a>
-                    <button onclick="location.reload()" class="btn-refresh">Actualiser</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn-retry">Réessayer</a>
+                    <a href="{{ url_for('refresh') }}" class="btn-refresh">Actualiser</a>
                 </div>
             </div>
         </div>
@@ -71,73 +73,90 @@
         <div class="users-section">
             <div class="section-header">
                 <h2 class="section-title">Détails des Utilisateurs</h2>
-                <a href="/refresh" class="btn-refresh-small">Actualiser</a>
+                <a href="{{ url_for('refresh') }}" class="btn-refresh-small">Actualiser</a>
             </div>
             
-            {% if users %}
             <div class="users-grid">
+                {% if users %}
                 {% for user in users %}
                 <div class="user-card">
                     <div class="user-header">
-                        <div class="user-avatar avatar-{{ loop.index % 10 + 1 }}">
-                            {{ user.get('name', 'N')[0] }}
-                        </div>
+                        <div class="user-avatar avatar-{{ loop.index0 % 10 + 1 }}">{{ user.get('name', 'N')[0] }}</div>
                         <div class="user-info">
                             <h3>{{ user.get('name', 'N/A') }}</h3>
                             <span class="user-profile">{{ user.get('profile', 'N/A') }}</span>
                         </div>
                     </div>
-                    
+
                     <div class="user-stats">
                         <div class="user-stat">
                             <span class="user-stat-value">{{ user.consumption_formatted }}</span>
-                            <div class="user-stat-label">Consommé</div>
+                            <span class="user-stat-label">Consommé</span>
                         </div>
+                        
                         <div class="user-stat">
                             <span class="user-stat-value">{{ user.limit_formatted }}</span>
-                            <div class="user-stat-label">Limite</div>
+                            <span class="user-stat-label">Limite</span>
                         </div>
+                        
                         <div class="user-stat">
                             <span class="user-stat-value">{{ user.get('uptime', '0s') }}</span>
-                            <div class="user-stat-label">Temps connexion</div>
+                            <span class="user-stat-label">Temps connexion</span>
                         </div>
+                        
                         <div class="user-stat">
                             <span class="user-stat-value">{{ "%.1f" % user.percentage }}%</span>
-                            <div class="user-stat-label">Utilisation</div>
+                            <span class="user-stat-label">Utilisation</span>
                         </div>
                     </div>
-                    
+
                     <div class="progress-bar">
-                        <div class="progress-fill {% if user.percentage > 80 %}high{% elif user.percentage > 50 %}medium{% endif %}" 
-                             style="--progress-width: {{ user.percentage }}%">
-                        </div>
+                        <div class="progress-fill {{ 'high' if user.percentage > 80 else 'medium' if user.percentage > 50 else '' }}" style="--progress-width: {{ user.percentage }}%"></div>
                     </div>
-                    
+
                     <div class="details-section">
                         {% if user.get('name') in viewed_details %}
-                            <div class="user-details">
-                                {% for key, value in viewed_details[user.get('name')].items() %}
-                                    <div><strong>{{ key }}:</strong> {{ value }}</div>
-                                {% endfor %}
-                            </div>
+                        <div class="user-details">
+                            {% for key, value in viewed_details[user.get('name')].items() %}
+                            <div><strong>{{ key }}:</strong> {{ value }}</div>
+                            {% endfor %}
+                        </div>
                         {% else %}
-                            <form method="post" class="details-form">
-                                <input type="hidden" name="username" value="{{ user.get('name') }}">
-                                <input type="password" name="password" placeholder="Mot de passe" required>
-                                <button type="submit" name="view_details" class="btn-details">Détails</button>
-                            </form>
+                        <form class="details-form" method="POST">
+                            <input type="hidden" name="username" value="{{ user.get('name') }}">
+                            <input type="password" name="password" placeholder="Mot de passe" required>
+                            <button type="submit" name="view_details" class="btn-details">Détails</button>
+                        </form>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <div class="no-users">Aucun utilisateur hotspot trouvé.</div>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="no-users">
-                <p>Aucun utilisateur hotspot trouvé.</p>
-            </div>
-            {% endif %}
         </div>
         {% endif %}
     </div>
+
+    <!-- Popup de confirmation -->
+    <div id="confirmation-popup" class="confirmation-popup">
+        <div class="popup-content">
+            <h3>Confirmation</h3>
+            <p>Êtes-vous sûr de vouloir réinitialiser tous les compteurs ? Cette action est irréversible.</p>
+            <div class="popup-actions">
+                <button class="btn-confirm" onclick="performReset()">Oui</button>
+                <button class="btn-cancel" onclick="hideConfirmationPopup()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">Compteurs réinitialisés avec succès !</div>
 </body>
 </html>

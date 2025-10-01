@@ -1,15 +1,14 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 import paramiko
 import socket
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key' 
+app.secret_key = 'super_secret_key'
 
 MIKROTIK_HOST = '192.168.15.254'
 MIKROTIK_USER = 'admin'
 MIKROTIK_PASS = 'i-konnect'
-
 
 APP_USER = 'admin'
 APP_PASS = 'password'
@@ -31,12 +30,11 @@ def get_hotspot_users():
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
-        # Connexion avec timeout
         client.connect(
             MIKROTIK_HOST, 
             username=MIKROTIK_USER, 
             password=MIKROTIK_PASS,
-            timeout=10  # Timeout de 10 secondes
+            timeout=10
         )
         
         stdin, stdout, stderr = client.exec_command('/ip hotspot user print detail')
@@ -45,7 +43,6 @@ def get_hotspot_users():
         
         client.close()
         
-        # Vérifier s'il y a des erreurs dans la commande
         if error_output:
             return {
                 'success': False,
@@ -53,7 +50,6 @@ def get_hotspot_users():
                 'error_type': 'command_error'
             }
 
-        # Parse the output
         users = []
         current_user = {}
         for line in output.splitlines():
@@ -73,7 +69,6 @@ def get_hotspot_users():
             if line.startswith(';;;'):
                 current_user['comment'] = line[3:].strip()
                 continue
-            # Parse key=value pairs
             for part in line.split():
                 if '=' in part:
                     key, value = part.split('=', 1)
@@ -82,7 +77,6 @@ def get_hotspot_users():
         if current_user:
             users.append(current_user)
 
-        # Exclude default-trial user
         users = [u for u in users if u.get('name') != 'default-trial']
 
         return {
@@ -141,7 +135,7 @@ def login():
         password = request.form.get('password')
         if username == APP_USER and password == APP_PASS:
             session['logged_in'] = True
-            session['viewed_details'] = {}  # Initialize viewed details
+            session['viewed_details'] = {}
             return redirect(url_for('dashboard'))
         else:
             return render_template('login.html', error='Identifiants invalides')
@@ -158,13 +152,11 @@ def dashboard():
 
     viewed_details = session['viewed_details']
 
-    # Gestion de la demande de détails utilisateur
     if request.method == 'POST' and 'view_details' in request.form:
         entered_pass = request.form.get('password')
         username = request.form.get('username')
         
         result = get_hotspot_users()
-        print(users)
         if result['success']:
             users = result['users']
             for u in users:
@@ -177,11 +169,9 @@ def dashboard():
                     session.modified = True
                     break
 
-    # Récupération des données utilisateurs
     result = get_hotspot_users()
     
     if not result['success']:
-        # En cas d'erreur, afficher le dashboard avec un message d'erreur
         return render_template('dashboard.html', 
                              connection_error=True,
                              error_message=result['error'],
@@ -225,6 +215,46 @@ def dashboard():
                          viewed_details=viewed_details,
                          last_update=result.get('last_update'),
                          mikrotik_host=MIKROTIK_HOST)
+
+@app.route('/reset', methods=['PUT'])
+def reset():
+    """Reset hotspot user counters via PUT request."""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Non authentifié'}), 401
+    
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            MIKROTIK_HOST, 
+            username=MIKROTIK_USER, 
+            password=MIKROTIK_PASS,
+            timeout=10
+        )
+        
+        command = '/ip hotspot user reset-counters [find where name!="default-trial"]'
+        stdin, stdout, stderr = client.exec_command(command)
+        error_output = stderr.read().decode('utf-8').strip()
+        
+        client.close()
+        
+        if error_output:
+            return jsonify({'success': False, 'error': f'Erreur de commande Mikrotik: {error_output}'}), 500
+        
+        return jsonify({'success': True, 'message': 'Compteurs réinitialisés avec succès'}), 200
+    
+    except socket.timeout:
+        return jsonify({'success': False, 'error': f'Timeout de connexion vers {MIKROTIK_HOST}'}), 500
+    except socket.gaierror:
+        return jsonify({'success': False, 'error': f'Impossible de résoudre l\'adresse {MIKROTIK_HOST}'}), 500
+    except ConnectionRefusedError:
+        return jsonify({'success': False, 'error': f'Connexion refusée par {MIKROTIK_HOST}'}), 500
+    except paramiko.AuthenticationException:
+        return jsonify({'success': False, 'error': 'Échec de l\'authentification'}), 500
+    except paramiko.SSHException as e:
+        return jsonify({'success': False, 'error': f'Erreur SSH: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erreur inattendue: {str(e)}'}), 500
 
 @app.route('/refresh')
 def refresh():

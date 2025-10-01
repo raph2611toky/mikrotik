@@ -156,8 +156,8 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* Bouton de réinitialisation dans le header */
-.reset-btn {
+/* Boutons de réinitialisation et d'édition dans le header */
+.reset-btn, .edit-limit-btn {
   background: var(--card-bg);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
@@ -169,7 +169,7 @@ body {
   cursor: pointer;
 }
 
-.reset-btn:hover {
+.reset-btn:hover, .edit-limit-btn:hover {
   background: var(--accent-bg);
   border-color: var(--border-accent);
   transform: translateY(-1px);
@@ -242,7 +242,7 @@ body {
   font-size: 13px;
 }
 
-.form-group input {
+.form-group input, .form-group select {
   width: 100%;
   padding: 14px 16px;
   background: var(--card-bg);
@@ -253,7 +253,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.form-group input:focus {
+.form-group input:focus, .form-group select:focus {
   outline: none;
   border-color: var(--primary-blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -730,13 +730,21 @@ body {
   opacity: 1;
 }
 
+.toast.error {
+  background: rgba(220, 38, 38, 0.9);
+}
+
 .toast::before {
   content: "✓";
   font-size: 16px;
 }
 
+.toast.error::before {
+  content: "✗";
+}
+
 /* Popup de confirmation */
-.confirmation-popup {
+.confirmation-popup, .limit-popup {
   position: fixed;
   top: 0;
   left: 0;
@@ -752,7 +760,7 @@ body {
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.confirmation-popup.show {
+.confirmation-popup.show, .limit-popup.show {
   opacity: 1;
   visibility: visible;
 }
@@ -787,8 +795,7 @@ body {
   justify-content: center;
 }
 
-.btn-confirm,
-.btn-cancel {
+.btn-confirm, .btn-cancel {
   padding: 10px 20px;
   border-radius: 8px;
   font-size: 14px;
@@ -909,11 +916,7 @@ body {
     align-items: flex-start;
   }
 
-  .error-actions {
-    flex-direction: column;
-  }
-
-  .popup-actions {
+  .error-actions, .popup-actions {
     flex-direction: column;
     gap: 8px;
   }
@@ -925,8 +928,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.stat-card,
-.user-card {
+.stat-card, .user-card {
   animation: fadeIn 0.3s ease forwards;
 }
 

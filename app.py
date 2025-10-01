@@ -182,6 +182,7 @@ def dashboard():
                              total_consumption_formatted="0 bytes",
                              total_limit_formatted="0 bytes",
                              total_percentage=0,
+                             total_limit_bytes=0,
                              viewed_details=viewed_details)
 
     users = result['users']
@@ -212,6 +213,7 @@ def dashboard():
                          total_consumption_formatted=total_consumption_formatted,
                          total_limit_formatted=total_limit_formatted,
                          total_percentage=total_percentage, 
+                         total_limit_bytes=total_limit,
                          viewed_details=viewed_details,
                          last_update=result.get('last_update'),
                          mikrotik_host=MIKROTIK_HOST)
@@ -243,6 +245,83 @@ def reset():
         
         return jsonify({'success': True, 'message': 'Compteurs réinitialisés avec succès'}), 200
     
+    except socket.timeout:
+        return jsonify({'success': False, 'error': f'Timeout de connexion vers {MIKROTIK_HOST}'}), 500
+    except socket.gaierror:
+        return jsonify({'success': False, 'error': f'Impossible de résoudre l\'adresse {MIKROTIK_HOST}'}), 500
+    except ConnectionRefusedError:
+        return jsonify({'success': False, 'error': f'Connexion refusée par {MIKROTIK_HOST}'}), 500
+    except paramiko.AuthenticationException:
+        return jsonify({'success': False, 'error': 'Échec de l\'authentification'}), 500
+    except paramiko.SSHException as e:
+        return jsonify({'success': False, 'error': f'Erreur SSH: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erreur inattendue: {str(e)}'}), 500
+
+@app.route('/set_limit', methods=['PUT'])
+def set_limit():
+    """Set the total limit for all hotspot users (except default-trial) via PUT request."""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Non authentifié'}), 401
+
+    data = request.get_json()
+    total_limit = data.get('total_limit')
+    unit = data.get('unit')
+
+    if not total_limit or not unit:
+        return jsonify({'success': False, 'error': 'Limite totale ou unité manquante'}), 400
+
+    try:
+        total_limit = float(total_limit)
+        if total_limit <= 0:
+            return jsonify({'success': False, 'error': 'La limite doit être positive'}), 400
+
+        # Convertir la limite en octets
+        unit_multipliers = {
+            'KB': 1024,
+            'MB': 1024 * 1024,
+            'GB': 1024 * 1024 * 1024,
+            'TB': 1024 * 1024 * 1024 * 1024
+        }
+        total_limit_bytes = int(total_limit * unit_multipliers[unit])
+
+        # Obtenir le nombre d'utilisateurs (excluant default-trial)
+        users_result = get_hotspot_users()
+        if not users_result['success']:
+            return jsonify({'success': False, 'error': users_result['error']}), 500
+
+        users = users_result['users']
+        total_users = len(users)
+        if total_users == 0:
+            return jsonify({'success': False, 'error': 'Aucun utilisateur trouvé'}), 400
+
+        # Calculer la limite par utilisateur
+        limit_per_user = total_limit_bytes // total_users
+
+        # Connexion SSH à Mikrotik
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            MIKROTIK_HOST,
+            username=MIKROTIK_USER,
+            password=MIKROTIK_PASS,
+            timeout=10
+        )
+
+        # Mettre à jour la limite pour tous les utilisateurs sauf default-trial
+        command = f'/ip hotspot user set [find where name!="default-trial"] limit-bytes-total={limit_per_user}'
+        stdin, stdout, stderr = client.exec_command(command)
+        error_output = stderr.read().decode('utf-8').strip()
+
+        client.close()
+
+        if error_output:
+            return jsonify({'success': False, 'error': f'Erreur de commande Mikrotik: {error_output}'}), 500
+
+        return jsonify({'success': True, 'message': f'Limites mises à jour avec succès ({human_readable_bytes(limit_per_user)} par utilisateur)'}), 200
+
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Valeur de limite invalide'}), 400
     except socket.timeout:
         return jsonify({'success': False, 'error': f'Timeout de connexion vers {MIKROTIK_HOST}'}), 500
     except socket.gaierror:

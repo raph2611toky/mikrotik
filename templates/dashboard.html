@@ -20,6 +20,7 @@
                 {% endif %}
             </div>
             <div class="header-right">
+                <button class="edit-limit-btn" onclick="showLimitPopup()">Éditer la limite</button>
                 <button class="reset-btn" onclick="showConfirmationPopup()">Réinitialiser</button>
                 <a href="{{ url_for('logout') }}" class="logout-btn">Déconnexion</a>
             </div>
@@ -139,7 +140,7 @@
         {% endif %}
     </div>
 
-    <!-- Popup de confirmation -->
+    <!-- Popup de confirmation pour réinitialisation -->
     <div id="confirmation-popup" class="confirmation-popup">
         <div class="popup-content">
             <h3>Confirmation</h3>
@@ -147,6 +148,30 @@
             <div class="popup-actions">
                 <button class="btn-confirm" onclick="performReset()">Oui</button>
                 <button class="btn-cancel" onclick="hideConfirmationPopup()">Non</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup pour éditer la limite totale -->
+    <div id="limit-popup" class="limit-popup">
+        <div class="popup-content">
+            <h3>Éditer la limite totale</h3>
+            <p>Limite totale actuelle : {{ total_limit_formatted }} ({{ total_users }} utilisateurs)</p>
+            <div class="form-group">
+                <label for="total-limit">Nouvelle limite totale</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="total-limit" placeholder="Entrez la limite" min="0" step="1" required>
+                    <select id="limit-unit">
+                        <option value="KB">Ko</option>
+                        <option value="MB" selected>Mo</option>
+                        <option value="GB">Go</option>
+                        <option value="TB">To</option>
+                    </select>
+                </div>
+            </div>
+            <div class="popup-actions">
+                <button class="btn-confirm" onclick="performSetLimit()">Confirmer</button>
+                <button class="btn-cancel" onclick="hideLimitPopup()">Annuler</button>
             </div>
         </div>
     </div>
